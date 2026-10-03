@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@sfigeci.org');
-  const [password, setPassword] = useState('SfiGeci@2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -105,15 +105,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Quick Demo Credentials Info */}
-        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
-          <div className="font-bold text-slate-800 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Default Superadmin Credentials</span>
-          </div>
-          <div>Email: <span className="font-mono font-bold text-red-600">admin@sfigeci.org</span></div>
-          <div>Password: <span className="font-mono font-bold text-red-600">SfiGeci@2026!</span></div>
-        </div>
+
 
         <div className="text-center pt-2">
           <Link href="/" className="text-xs font-bold text-slate-500 hover:text-red-600 transition">
