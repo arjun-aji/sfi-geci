@@ -5,6 +5,7 @@ import { DataService } from '@/lib/data-service';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { Bell, Calendar, ArrowLeft, Share2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import type { Metadata } from 'next';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -12,10 +13,23 @@ interface Props {
 
 export const revalidate = 60;
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const announcement: any = await DataService.getAnnouncementById(id);
+  if (!announcement) {
+    return {
+      title: 'Announcement Not Found | SFI GECI',
+    };
+  }
+  return {
+    title: `${announcement.title} | SFI GECI`,
+    description: announcement.shortDescription || 'Campus Announcement from SFI GECI.',
+  };
+}
+
 export default async function AnnouncementDetailPage({ params }: Props) {
   const { id } = await params;
-  const announcements = await DataService.getAnnouncements(false);
-  const announcement = announcements.find((a) => a._id === id);
+  const announcement: any = await DataService.getAnnouncementById(id);
 
   if (!announcement) {
     notFound();

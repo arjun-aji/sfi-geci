@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { connectDB } from './db';
 import { User, IUser } from '../models/User';
 import { Department, IDepartment } from '../models/Department';
@@ -175,7 +176,12 @@ function initMemoryStore(): MemoryStore {
     })),
     events: [],
     members: [...OFFICIAL_UNIT_MEMBERS],
-    announcements: [],
+    announcements: INITIAL_ANNOUNCEMENTS.map((a, i) => ({
+      ...a,
+      _id: `ann_${i + 1}`,
+      createdAt: now,
+      updatedAt: now,
+    })),
     gallery: [],
     complaintCategories: INITIAL_COMPLAINT_CATEGORIES.map((cc, i) => ({
       ...cc,
@@ -791,11 +797,32 @@ export const DataService = {
     const db = await connectDB();
     if (db) {
       const filter = publishedOnly ? { isPublished: true } : {};
-      return await Announcement.find(filter).sort({ publishedAt: -1 }).lean();
+      const res = await Announcement.find(filter).sort({ publishedAt: -1 }).lean();
+      return toPlain(res);
     }
-    return memoryStore.announcements
-      .filter((a) => !publishedOnly || a.isPublished)
-      .sort((a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime());
+    return toPlain(
+      memoryStore.announcements
+        .filter((a) => !publishedOnly || a.isPublished)
+        .sort((a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime())
+    );
+  },
+
+  async getAnnouncementById(id: string) {
+    const db = await connectDB();
+    if (db) {
+      try {
+        if (mongoose.isValidObjectId(id)) {
+          const item = await Announcement.findById(id).lean();
+          if (item) return toPlain(item);
+        }
+        const item = await Announcement.findOne({ _id: id }).lean();
+        if (item) return toPlain(item);
+      } catch (e) {
+        console.error('Error fetching announcement by ID:', e);
+      }
+    }
+    const item = memoryStore.announcements.find((a) => String(a._id) === String(id)) || null;
+    return toPlain(item);
   },
 
   async saveAnnouncement(data: Partial<IAnnouncement>) {
@@ -808,7 +835,7 @@ export const DataService = {
     }
     const now = new Date();
     if ((data as any)._id) {
-      const idx = memoryStore.announcements.findIndex((a) => a._id === (data as any)._id);
+      const idx = memoryStore.announcements.findIndex((a) => String(a._id) === String((data as any)._id));
       if (idx !== -1) {
         memoryStore.announcements[idx] = { ...memoryStore.announcements[idx], ...data, updatedAt: now };
         return memoryStore.announcements[idx];
@@ -824,7 +851,7 @@ export const DataService = {
     if (db) {
       return await Announcement.findByIdAndDelete(id);
     }
-    const idx = memoryStore.announcements.findIndex((a) => a._id === id);
+    const idx = memoryStore.announcements.findIndex((a) => String(a._id) === String(id));
     if (idx !== -1) memoryStore.announcements.splice(idx, 1);
     return true;
   },
@@ -834,11 +861,32 @@ export const DataService = {
     const db = await connectDB();
     if (db) {
       const filter = publishedOnly ? { isPublished: true } : {};
-      return await GalleryAlbum.find(filter).sort({ date: -1 }).lean();
+      const res = await GalleryAlbum.find(filter).sort({ date: -1 }).lean();
+      return toPlain(res);
     }
-    return memoryStore.gallery
-      .filter((g) => !publishedOnly || g.isPublished)
-      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+    return toPlain(
+      memoryStore.gallery
+        .filter((g) => !publishedOnly || g.isPublished)
+        .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+    );
+  },
+
+  async getGalleryAlbumById(id: string) {
+    const db = await connectDB();
+    if (db) {
+      try {
+        if (mongoose.isValidObjectId(id)) {
+          const item = await GalleryAlbum.findById(id).lean();
+          if (item) return toPlain(item);
+        }
+        const item = await GalleryAlbum.findOne({ _id: id }).lean();
+        if (item) return toPlain(item);
+      } catch (e) {
+        console.error('Error fetching gallery album by ID:', e);
+      }
+    }
+    const item = memoryStore.gallery.find((g) => String(g._id) === String(id)) || null;
+    return toPlain(item);
   },
 
   async saveGalleryAlbum(data: Partial<IGalleryAlbum>) {
@@ -851,7 +899,7 @@ export const DataService = {
     }
     const now = new Date();
     if ((data as any)._id) {
-      const idx = memoryStore.gallery.findIndex((g) => g._id === (data as any)._id);
+      const idx = memoryStore.gallery.findIndex((g) => String(g._id) === String((data as any)._id));
       if (idx !== -1) {
         memoryStore.gallery[idx] = { ...memoryStore.gallery[idx], ...data, updatedAt: now };
         return memoryStore.gallery[idx];
@@ -867,7 +915,7 @@ export const DataService = {
     if (db) {
       return await GalleryAlbum.findByIdAndDelete(id);
     }
-    const idx = memoryStore.gallery.findIndex((g) => g._id === id);
+    const idx = memoryStore.gallery.findIndex((g) => String(g._id) === String(id));
     if (idx !== -1) memoryStore.gallery.splice(idx, 1);
     return true;
   },

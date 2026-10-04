@@ -5,6 +5,7 @@ import { DataService } from '@/lib/data-service';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import type { Metadata } from 'next';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -12,10 +13,23 @@ interface Props {
 
 export const revalidate = 60;
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const album: any = await DataService.getGalleryAlbumById(id);
+  if (!album) {
+    return {
+      title: 'Album Not Found | SFI GECI',
+    };
+  }
+  return {
+    title: `${album.title} | Campus Gallery | SFI GECI`,
+    description: album.description || 'Campus photo gallery from SFI GECI.',
+  };
+}
+
 export default async function GalleryDetailPage({ params }: Props) {
   const { id } = await params;
-  const albums = await DataService.getGalleryAlbums(false);
-  const album = albums.find((a) => a._id === id);
+  const album: any = await DataService.getGalleryAlbumById(id);
 
   if (!album) {
     notFound();
